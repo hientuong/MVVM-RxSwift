@@ -7,13 +7,14 @@
 //
 
 import Foundation
-
+import RxSwift
+import RxCocoa
 
 protocol TodoView: class{
-    func insertTodoItem() -> ()
-    func removeTodoItem(index: Int) -> ()
-    func updateTodoItem(at index: Int) -> ()
-    func reloadItems() -> ()
+    //    func insertTodoItem() -> ()
+    //    func removeTodoItem(index: Int) -> ()
+    //    func updateTodoItem(at index: Int) -> ()
+    //    func reloadItems() -> ()
 }
 
 protocol TodoViewDelegate: class {
@@ -27,18 +28,28 @@ protocol TodoViewPresentable {
 }
 
 class TodoViewModel: TodoViewPresentable {
-    weak var delegate: TodoView?
+    //    weak var delegate: TodoView?
     var newTodoItem: String?
-    var items: [TodoItemPresentable] = []
+    var items: Variable<[TodoItemPresentable]> = Variable([])
     
-    init(delegate: TodoView){
-        self.delegate = delegate
+    //    init(delegate: TodoView){
+    //        self.delegate = delegate
+    //
+    //        let item1 = TodoItem(id: "1", textValue: "Washing Clothes", parentViewModel: self)
+    //        let item2 = TodoItem(id: "2", textValue: "Buy Groceries", parentViewModel: self)
+    //        let item3 = TodoItem(id: "3", textValue: "Wash Car", parentViewModel: self)
+    //
+    //        items.value.append(contentsOf: [item1, item2, item3])
+    //    }
+    
+    init(){
+        //        self.delegate = delegate
         
         let item1 = TodoItem(id: "1", textValue: "Washing Clothes", parentViewModel: self)
         let item2 = TodoItem(id: "2", textValue: "Buy Groceries", parentViewModel: self)
         let item3 = TodoItem(id: "3", textValue: "Wash Car", parentViewModel: self)
         
-        items.append(contentsOf: [item1, item2, item3])
+        items.value.append(contentsOf: [item1, item2, item3])
     }
 }
 
@@ -53,43 +64,52 @@ extension TodoViewModel: TodoViewDelegate{
             return
         }
         
-        let itemIndex = items.count + 1
+        let itemIndex = items.value.count + 1
+        
         let newItem = TodoItem(id: "\(itemIndex)", textValue: newValue, parentViewModel: self)
-        items.append(newItem)
+        
         newTodoItem = ""
-        self.delegate?.insertTodoItem()
+        
+        items.value.append(newItem)
+        
+        
+        
+        //        self.delegate?.insertTodoItem()
     }
-   
+    
     func onTodoDelete(todoId: String) {
         print("Remove with Todo index: \(todoId)")
         
-        guard let index = self.items.index(where: {$0.id == todoId}) else {
+        guard let index = self.items.value.index(where: {$0.id == todoId}) else {
             print("Index for item does not exist")
             return
         }
         
-        self.items.remove(at: index)
-        self.delegate?.removeTodoItem(index: index)
+        self.items.value.remove(at: index)
+        //        self.delegate?.removeTodoItem(index: index)
     }
     
     func onTodoDone(todoId: String) {
         print("Done with Todo index: \(todoId)")
         
-        guard let index = self.items.index(where: {$0.id == todoId}) else {
+        guard let index = self.items.value.index(where: {$0.id == todoId}) else {
             print("Index for item done does not exits")
             return
         }
         
-        var todoItem = self.items[index]
-        todoItem.isDone = !(todoItem.isDone!)
+        var todoItem = self.items.value[index]
+        todoItem.isDone = !(todoItem.isDone)!
         
         if var doneMenuItem = todoItem.menuItems?.filter({ todoMenuItem -> Bool in
             todoMenuItem is DoneMenuItem
-            }).first {
+        }).first {
             doneMenuItem.title = todoItem.isDone! ? "Undone" : "Done"
         }
         
-        self.items.sorted(by: {
+        self.items.value.sort(by: {
+            if !($0.isDone!) && !($1.isDone!) {
+                return $0.id! < $1.id!
+            }
             
             if $0.isDone! && $1.isDone! {
                 return $0.id! < $1.id!
@@ -97,9 +117,6 @@ extension TodoViewModel: TodoViewDelegate{
             
             return !($0.isDone!) && $1.isDone!
         })
-    
-//        self.delegate?.updateTodoItem(at: index)
-        self.delegate?.reloadItems()
     }
 }
 

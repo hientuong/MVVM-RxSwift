@@ -16,13 +16,23 @@ class ViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var newItemTF: UITextField!
     
+    let disposeBag = DisposeBag()
     var viewModel : TodoViewModel?
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         let nib = UINib(nibName: TodoItemTableViewCell.Identifier, bundle: nil)
+        
         tableView.register(nib, forCellReuseIdentifier: TodoItemTableViewCell.Identifier)
-        viewModel = TodoViewModel(delegate: self)
+        
+//        viewModel = TodoViewModel(delegate: self)
+        viewModel = TodoViewModel()
+        
+        viewModel?.items.asObservable().bind(to: tableView.rx.items(cellIdentifier: TodoItemTableViewCell.Identifier, cellType: TodoItemTableViewCell.self)){ index, item, cell in
+            cell.configure(withViewModel: item)
+        }.disposed(by: disposeBag)
+        
     }
     
     @IBAction func onAddItem(_ sender: Any) {
@@ -32,34 +42,35 @@ class ViewController: UIViewController {
         }
         
         viewModel?.newTodoItem = newTodoValue
+    
         
         self.viewModel?.onAddTodoItem()
     }
 }
 
-extension ViewController: UITableViewDataSource{
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return (viewModel?.items.count)!
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: TodoItemTableViewCell.Identifier, for: indexPath) as! TodoItemTableViewCell
-        let itemViewModel = viewModel?.items[indexPath.row]
-        cell.configure(withViewModel: itemViewModel!)
-        return cell
-    }
-    
-}
+//extension ViewController: UITableViewDataSource{
+//    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        return (viewModel?.items.value.count)!
+//    }
+//
+//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+//        let cell = tableView.dequeueReusableCell(withIdentifier: TodoItemTableViewCell.Identifier, for: indexPath) as! TodoItemTableViewCell
+//        let itemViewModel = viewModel?.items.value[indexPath.row]
+//        cell.configure(withViewModel: itemViewModel!)
+//        return cell
+//    }
+//
+//}
 
 extension ViewController: UITableViewDelegate{
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        guard let itemViewModel: TodoItem = viewModel?.items[indexPath.row] as? TodoItem else { return }
+        guard let itemViewModel: TodoItem = viewModel?.items.value[indexPath.row] as? TodoItem else { return }
         itemViewModel.onItemSelected()
     }
     
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
-        let itemViewModel = self.viewModel?.items[indexPath.row] as? TodoItem
+        let itemViewModel = self.viewModel?.items.value[indexPath.row] as? TodoItem
         
         var menuActions: [UITableViewRowAction] = []
         
@@ -86,43 +97,43 @@ extension ViewController: UITableViewDelegate{
     }
 }
 
-extension ViewController: TodoView{
-    
-    func insertTodoItem() {
-        print("insert Todo Item")
-        
-        guard let items = viewModel?.items else { return }
-        
-        self.newItemTF.text = viewModel?.newTodoItem
-        
-        self.tableView.beginUpdates()
-        self.tableView.insertRows(at:  [IndexPath(row: items.count - 1, section: 0)], with: .automatic)
-        self.tableView.endUpdates()
-        
-    }
-    
-    func removeTodoItem(index: Int) {
-        print("delete todo item")
-        DispatchQueue.main.async {
-            self.tableView.beginUpdates()
-            self.tableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
-            self.tableView.endUpdates()
-        }
-    }
-    
-    func updateTodoItem(at index: Int) {
-        print("update todo item")
-        DispatchQueue.main.async {
-            self.tableView.beginUpdates()
-            self.tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
-            self.tableView.endUpdates()
-        }
-    }
-    
-    func reloadItems() {
-        DispatchQueue.main.async {
-            self.tableView.reloadData()
-        }
-    }
-}
+//extension ViewController: TodoView{
+
+//    func insertTodoItem() {
+//        print("insert Todo Item")
+//
+//        guard let items = viewModel?.items else { return }
+//
+//        self.newItemTF.text = viewModel?.newTodoItem
+//
+//        self.tableView.beginUpdates()
+//        self.tableView.insertRows(at:  [IndexPath(row: items.value.count - 1, section: 0)], with: .automatic)
+//        self.tableView.endUpdates()
+//
+//    }
+//
+//    func removeTodoItem(index: Int) {
+//        print("delete todo item")
+//        DispatchQueue.main.async {
+//            self.tableView.beginUpdates()
+//            self.tableView.deleteRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
+//            self.tableView.endUpdates()
+//        }
+//    }
+//
+//    func updateTodoItem(at index: Int) {
+//        print("update todo item")
+//        DispatchQueue.main.async {
+//            self.tableView.beginUpdates()
+//            self.tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
+//            self.tableView.endUpdates()
+//        }
+//    }
+//
+//    func reloadItems() {
+//        DispatchQueue.main.async {
+//            self.tableView.reloadData()
+//        }
+//    }
+//}
 
