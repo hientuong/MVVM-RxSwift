@@ -7,40 +7,13 @@
 //
 
 import Foundation
-//
-//protocol TodoMenuItemPresentable {
-//    var title: String? { get }
-//    var backColor: String? { get }
-//}
-//
-//protocol TodoMenuItemDelegate{
-//    func onMenuItemSelected() -> ()
-//}
-//
-//class TodoMenuItem: TodoMenuItemPresentable, TodoMenuItemDelegate{
-//    var title: String?
-//    var backColor: String?
-//
-//    func onMenuItemSelected() {
-//        //
-//    }
-//}
-//
-//class RemoveMenuItemViewModel: TodoMenuItem {
-//    override func onMenuItemSelected() {
-//        //
-//    }
-//}
-//
-//class DoneMenuItemViewModel: TodoMenuItem{
-//    override func onMenuItemSelected() {
-//        //
-//    }
-//}
+
 
 protocol TodoView: class{
     func insertTodoItem() -> ()
     func removeTodoItem(index: Int) -> ()
+    func updateTodoItem(at index: Int) -> ()
+    func reloadItems() -> ()
 }
 
 protocol TodoViewDelegate: class {
@@ -101,6 +74,32 @@ extension TodoViewModel: TodoViewDelegate{
     
     func onTodoDone(todoId: String) {
         print("Done with Todo index: \(todoId)")
+        
+        guard let index = self.items.index(where: {$0.id == todoId}) else {
+            print("Index for item done does not exits")
+            return
+        }
+        
+        var todoItem = self.items[index]
+        todoItem.isDone = !(todoItem.isDone!)
+        
+        if var doneMenuItem = todoItem.menuItems?.filter({ todoMenuItem -> Bool in
+            todoMenuItem is DoneMenuItem
+            }).first {
+            doneMenuItem.title = todoItem.isDone! ? "Undone" : "Done"
+        }
+        
+        self.items.sorted(by: {
+            
+            if $0.isDone! && $1.isDone! {
+                return $0.id! < $1.id!
+            }
+            
+            return !($0.isDone!) && $1.isDone!
+        })
+    
+//        self.delegate?.updateTodoItem(at: index)
+        self.delegate?.reloadItems()
     }
 }
 

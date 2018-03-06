@@ -38,7 +38,7 @@ class TodoItem: TodoItemPresentable {
         removeMenuItem.backColor = "ff0000"
         
         let doneMenuItem = DoneMenuItem(parentViewModel: self)
-        doneMenuItem.title = "Done"
+        doneMenuItem.title = isDone! ? "Undone" : "Done"
         doneMenuItem.backColor = "008000"
         
         menuItems?.append(contentsOf: [removeMenuItem, doneMenuItem])

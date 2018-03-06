@@ -109,5 +109,20 @@ extension ViewController: TodoView{
             self.tableView.endUpdates()
         }
     }
+    
+    func updateTodoItem(at index: Int) {
+        print("update todo item")
+        DispatchQueue.main.async {
+            self.tableView.beginUpdates()
+            self.tableView.reloadRows(at: [IndexPath(row: index, section: 0)], with: .automatic)
+            self.tableView.endUpdates()
+        }
+    }
+    
+    func reloadItems() {
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+    }
 }
 
